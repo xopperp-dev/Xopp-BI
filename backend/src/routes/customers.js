@@ -27,8 +27,13 @@ router.get('/', auth(), async (req, res) => {
     const total = parseInt(countRes.rows[0].count);
 
     params.push(parseInt(limit), offset);
+
+    // NOTE: `mobile` is aliased from the `mobile` column (if it exists) or falls
+    // back to `phone`. Adjust the alias below to match your actual DB column name.
+    // If your table has separate `mobile` and `phone` columns, use them directly.
+    // If only one phone column exists, alias it to both `mobile` and `phone`.
     const { rows } = await pool.query(
-      `SELECT c.*, 
+      `SELECT c.*,
         (SELECT COUNT(*) FROM ownership o WHERE o.customer_id = c.id AND NOT o.is_duplicate) as property_count
        FROM customers c
        ${whereClause}
@@ -88,6 +93,27 @@ router.get('/stats/summary', auth(), async (req, res) => {
   }
 });
 
+// Recent properties list (for dashboard Properties card)  ← MUST be before /:id
+router.get('/properties/recent', auth(), async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const { rows } = await pool.query(
+      `SELECT o.id, o.project, o.unit, o.unit_type, o.land_number,
+              o.emirate, o.property_type, o.registration_date,
+              c.name as _customerName, c.customer_id as _customerId, c.id as _id
+       FROM ownership o
+       JOIN customers c ON o.customer_id = c.id
+       WHERE o.is_duplicate = false
+       ORDER BY o.created_at DESC
+       LIMIT $1`,
+      [limit]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get customer by ID with properties  ← MUST be after static routes
 router.get('/:id', auth(), async (req, res) => {
   try {
@@ -95,7 +121,6 @@ router.get('/:id', auth(), async (req, res) => {
 
     let customers;
     if (isUUID) {
-      // FIX: Only compare against id (UUID column) — never mix UUID and string in same OR
       ({ rows: customers } = await pool.query(
         'SELECT * FROM customers WHERE id = $1',
         [req.params.id]
@@ -140,6 +165,39 @@ router.put('/:id', auth(['admin', 'operator']), async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Delete single customer (admin only)
+router.delete('/:id', auth(['admin']), async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('DELETE FROM ownership WHERE customer_id = $1::uuid', [req.params.id]);
+    const { rows } = await client.query('DELETE FROM customers WHERE id = $1::uuid RETURNING id', [req.params.id]);
+    if (!rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Not found' }); }
+    await client.query('COMMIT');
+    res.json({ success: true });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally { client.release(); }
+});
+
+// Bulk delete customers (admin only)
+router.post('/delete-multiple', auth(['admin']), async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'No IDs provided' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('DELETE FROM ownership WHERE customer_id = ANY($1::uuid[])', [ids]);
+    const { rowCount } = await client.query('DELETE FROM customers WHERE id = ANY($1::uuid[])', [ids]);
+    await client.query('COMMIT');
+    res.json({ success: true, deletedCount: rowCount });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally { client.release(); }
 });
 
 module.exports = router;

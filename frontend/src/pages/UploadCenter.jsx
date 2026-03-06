@@ -1,33 +1,23 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, RefreshCw, PenLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-const COMMUNITIES_BY_EMIRATE = {
-  Dubai: ["AL Athbah", "Abu Hail", "Al Asbaq", "Al Aweer First", "Al Aweer Second", "Al Baagh", "Al Bada", "Al Baharna", "Al Baraha", "Al Barsha", "Al Barsha First", "Al Barsha Second", "Al Barsha South Fifth", "Al Barsha South Fourth", "Al Barsha Third", "Al Buteen", "Al Butthein", "Al Dhagaya", "Al Garhoud", "Al Hamriya", "Al Hamriya Port", "Al Hathmah", "Al Hebiah Fourth", "Al Hebiah Fifth", "Al Hebiah First", "Al Hebiah Second", "Al Hebiah Sixth", "Al Hebiah Third", "Al Hudaiba", "Al Jaddaf", "Al Jafiliya", "Al Karama", "Al Khabaisi", "Al Khairan First", "Al Khairan Second", "Al Khairan Third", "Al Khawaneej", "Al Khawaneej First", "Al Khawaneej Second", "Al Kheeran", "Al Kifaf", "Al Layan 1", "Al Layan 2", "Al Lisaili", "Al Lulu Island", "Al Mafraq", "Al Mamzar", "Al Manara", "Al Manara First", "Al Manara Second", "Al Manara Third", "Al Markada", "Al Melaheyah", "Al Merkad", "Al Mizhar", "Al Mizhar First", "Al Mizhar Second", "Al Muraqqabat", "Al Murar", "Al Muteena", "Al Nahda", "Al Nahda First", "Al Nahda Second", "Al Nasr Leisureland", "Al Qusais", "Al Qusais First", "Al Qusais Industrial First", "Al Qusais Industrial Fourth", "Al Qusais Industrial Second", "Al Qusais Industrial Third", "Al Qusais Second", "Al Qusais Third", "Al Qusais Fourth", "Al Ras", "Al Rigga", "Al Sabkha", "Al Safa", "Al Safa First", "Al Safa Second", "Al Satta", "Al Shindagha", "Al Souq Al Kabeer", "Al Twar", "Al Twar First", "Al Twar Second", "Al Twar Third", "Al Warqaa", "Al Warqaa First", "Al Warqaa Second", "Al Warqaa Third", "Al Warqaa Fourth", "Al Wasl", "Al Wuheida", "Aleyas 1", "Aleyas 2", "Aleyas 3", "Alfalah", "Alfugas", "Alghubaiba", "Alhashmia", "Aljabel Ali Industrial", "Aljebal Ali", "Alkhawaneej", "Alkifaf", "Alkisar 1", "Alkisar 2", "Alkisar 3", "Allisali", "Almamzar", "Almarqad", "Almersal", "Almizhar", "Almuraqqabat", "Almusalla", "Alnahda", "Alnujoom Islands", "Alquoz", "Alquoz 1", "Alquoz 2", "Alquoz 3", "Alquoz 4", "Alquoz Industrial 1", "Alquoz Industrial 2", "Alquoz Industrial 3", "Alquoz Industrial 4", "Alquoz Industrial Area 1", "Alquoz Industrial Area 2", "Alquoz Industrial Area 3", "Alquoz Industrial Area 4", "Alquoz Industrial First", "Alquoz Industrial Fourth", "Alquoz Industrial Second", "Alquoz Industrial Third", "Alquoz Second", "Alquoz Third", "Alquoz Fourth", "Alquoz First", "Alras", "Alsafouh", "Alsafouh 1", "Alsafouh 2", "Alsatwa", "Alsouq Alkabeer", "Altwar", "Alwasl", "Alyaith", "Ayal Nasir", "Barsha Heights", "Bukadra", "Bu Kadra", "Business Bay", "Cultural Village", "DIFC", "Dubai Festival City", "Dubai Marina", "Dubai Sports City", "Dubai Studio City", "Dubai Waterfront", "Dubai World Central", "Emirates Hills", "Ghaf Tree", "Ghadeer Al Tair", "Gharb Al Ras", "Ghusais", "Ghusais Industrial Area", "Ghusais Industrial First", "Ghusais Industrial Second", "Ghusais Industrial Third", "Ghusais Second", "Ghusais Third", "Ghusais Fourth", "Ghusais First", "Hadaeq Sheikh Mohammed Bin Rashid", "Hatta", "Hatta Hill Park", "Hor Al Anz", "Hor Al Anz East", "Jabal Ali", "Jabal Ali First", "Jabal Ali Industrial First", "Jabal Ali Industrial Second", "Jabal Ali Industrial Third", "Jabal Ali Industrial Fourth", "Jabal Ali Industrial Fifth", "Jabal Ali Industrial Sixth", "Jabal Ali Industrial Seventh", "Jabal Ali Industrial Eighth", "Jabal Ali Industrial Ninth", "Jabal Ali Industrial Tenth", "Jabal Ali Industrial Eleventh", "Jabal Ali Industrial Twelfth", "Jabal Ali Industrial Thirteenth", "Jabal Ali Industrial Fourteenth", "Jabal Ali Industrial Fifteenth", "Jabal Ali Industrial Sixteenth", "Jabal Ali Industrial Seventeenth", "Jabal Ali Industrial Eighteenth", "Jabal Ali Industrial Nineteenth", "Jabal Ali Industrial Twentieth", "Jabal Ali Industrial Twenty First", "Jabal Ali Industrial Twenty Second", "Jabal Ali Industrial Twenty Third", "Jabal Ali Industrial Twenty Fourth", "Jabal Ali Industrial Twenty Fifth", "Jabal Ali Industrial Twenty Sixth", "Jabal Ali Industrial Twenty Seventh", "Jabal Ali Industrial Twenty Eighth", "Jabal Ali Industrial Twenty Ninth", "Jabal Ali Industrial Thirtieth", "Jabal Ali Second", "Jebel Ali Industrial Area", "Jumeirah", "Jumeirah Bay", "Jumeirah First", "Jumeirah Lakes Towers", "Jumeirah Second", "Jumeirah Third", "Jumeirah Village Circle", "Jumeirah Village Triangle", "La Mer", "Lehbab", "Lehbab First", "Lehbab Second", "Liwan", "Madinat Al Mataar", "Madinat Dubai Al Melaheyah", "Madinat Hind 1", "Madinat Hind 2", "Madinat Hind 3", "Madinat Hind 4", "Mena Jabal Ali", "Mereiyeel", "Mirdif", "Muashrah Al Bahraana", "Mugatrah", "Muhaisanah Fifth", "Muhaisanah First", "Muhaisanah Fourth", "Muhaisanah Second", "Muhaisanah Third", "Muhaisna", "Muragab", "Mushrif", "Nad Al Hamar", "Nad Al Shiba", "Nad Al Shiba First", "Nad Al Shiba Fourth", "Nad Al Shiba Second", "Nad Al Shiba Third", "Nad Rashid", "Nad Shamma", "Nadd Hessa", "Naif", "Naif North", "Naif South", "Nazwah", "Oud Al Muteena", "Oud Al Muteena First", "Oud Almuteena Second", "Oud Metha", "Palm Deira", "Palm Jabal Ali", "Palm Jumeirah", "Port Saeed", "Ras Al Khor", "Ras Al Khor Industrial First", "Ras Al Khor Industrial Second", "Ras Al Khor Industrial Third", "Rega Al Buteen", "Remah", "Riqat Masali", "Saih Aldahal", "Saih Alsalam", "Saih Shuaelah", "Saih Shuaib 1", "Saih Shuaib 2", "Saih Shuaib 3", "Saih Shuaib 4", "Shandagha", "Shandagha East", "Shandagha West", "Sikka Al Khail", "Sikkat Al Khail North", "Sikkat Al Khail South", "Souq Al-Lariyyah", "Souq Al-Tamar", "Souq Sikkat Al Khail", "Tareeq Abu Dhabi", "Tareeq Al Aweer", "Tawaa Al Sayegh", "Tawi Al Muraqqab", "Tawi Alfuqa", "Trade Center First", "Trade Center Second", "Um Al Sheif", "Um Almoameneen", "Um Esalay", "Um Hurair First", "Um Hurair Second", "Um Ramool", "Um Suqaim", "Um Suqaim First", "Um Suqaim Second", "Um Suqaim Third", "Umm Addamin", "Umm Hurair", "Universe Islands", "Wadi Al Amardi", "Wadi Al Safa 2", "Wadi Al Safa 3", "Wadi Al Safa 4", "Wadi Al Safa 5", "Wadi Al Safa 6", "Wadi Al Safa 7", "Warsan Fourth", "World Islands", "Yaraah", "Zaabeel First", "Zaabeel Second", "Zabeel East", "Zareeba Duviya"],
-  Abudhabi: ["Al Reem Island", "Yas Island", "Saadiyat Island", "Al Maryah Island", "Corniche Area", "Khalifa City", "Mohammed Bin Zayed City", "Al Raha Beach", "Masdar City", "Al Bateen", "Tourist Club Area", "Al Mushrif", "Al Karamah", "Khalidiyah"],
-  Sharjah: ["Al Majaz", "Al Nahda", "Al Khan", "Al Taawun", "Muwaileh", "Al Qasimia", "Industrial Area", "Al Mamzar", "Halwan", "University City"],
-  Ajman: ["Al Nuaimiya", "Al Rashidiya", "Emirates City", "Al Jurf", "Al Hamidiyah", "Ajman Downtown", "Al Rawda", "Al Rumailah"],
-  'Ras Al Khaimah': ["Al Hamra Village", "Mina Al Arab", "Al Marjan Island", "RAK City", "Al Qurm", "Dafan Al Nakheel", "Al Nakheel"],
-  'Umm Al Quein': ["UAQ Marina", "Al Maidan", "Al Raas", "Al Salamah"],
-  Fujeirah: ["Fujairah City", "Dibba Al Fujairah", "Kalba", "Khor Fakkan"],
-};
-
-// ─── Pre-computed deduplicated + sorted full community list ───────────────────
-const ALL_COMMUNITIES = [...new Set(Object.values(COMMUNITIES_BY_EMIRATE).flat())].sort((a, b) =>
-  a.toLowerCase().localeCompare(b.toLowerCase())
-);
-
-const FORM_FIELDS = [
-  { key: 'emirate', label: 'Emirate', type: 'fixed', options: ['Dubai', 'Abudhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Umm Al Quein', 'Fujeirah'] },
-  { key: 'property_type', label: 'Property Type', type: 'fixed', options: ['Plot', 'Villa & TH', 'Apartment', 'Commercial', 'Labourcamp', 'Warehouse'] },
+// All fields in display order — type 'map' = maps to a file column, 'fixed' = fixed dropdown, 'manual' = free text
+const ALL_FIELDS = [
+  {
+    key: 'emirate', label: 'Emirate', type: 'fixed',
+    options: ['Dubai', 'Abudhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Umm Al Quein', 'Fujeirah']
+  },
+  {
+    key: 'property_type', label: 'Property Type', type: 'fixed',
+    options: ['Plot', 'Villa & TH', 'Apartment', 'Commercial', 'Labourcamp', 'Warehouse']
+  },
   { key: 'area', label: 'Area', type: 'map' },
-  { key: 'community', label: 'Community', type: 'community' },
+  { key: 'community', label: 'Community', type: 'map' },
   { key: 'land_number', label: 'Plot Number', type: 'map' },
-  { key: 'project', label: 'Project Name', type: 'map' },
+  { key: 'project', label: 'Project Name', type: 'mapOrManual' },
   { key: 'unit', label: 'Unit No', type: 'map' },
   { key: 'name', label: 'Customer Name', type: 'map' },
   { key: 'mobile', label: 'Mobile No', type: 'map' },
@@ -40,167 +30,36 @@ const FORM_FIELDS = [
   { key: 'registration_date', label: 'Reg Date', type: 'map' },
 ];
 
-// ─── Reusable searchable dropdown ────────────────────────────────────────────
-function SearchableSelect({ value, onChange, placeholder, options = [], columnOptions = [] }) {
-  const [search, setSearch] = useState('');
-  const [open, setOpen] = useState(false);
-  const wrapperRef = useRef(null);
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    const close = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false);
-        setSearch('');
-      }
-    };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, []);
-
-  useEffect(() => {
-    if (open && inputRef.current) inputRef.current.focus();
-  }, [open]);
-
-  const q = search.toLowerCase();
-  const filteredOptions = options.filter(o => o.toLowerCase().includes(q));
-  const filteredCols = columnOptions.filter(c => c.toLowerCase().includes(q));
-
-  const isColVal = typeof value === 'string' && value.startsWith('__col__');
-  const displayLabel = !value ? null
-    : isColVal ? `→ ${value.slice(7)}`
-      : value;
-
-  const pick = (val) => { onChange(val); setOpen(false); setSearch(''); };
-
-  const rowBase = { padding: '8px 12px', fontSize: '0.85rem', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
-
-  const Row = ({ val, children }) => {
-    const active = value === val;
-    return (
-      <div
-        onClick={() => pick(val)}
-        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
-        onMouseLeave={e => e.currentTarget.style.background = active ? 'var(--bg3)' : 'transparent'}
-        style={{ ...rowBase, color: '#ffffff', background: active ? 'var(--bg3)' : 'transparent', fontWeight: active ? 600 : 400 }}
-      >{children}</div>
-    );
-  };
-
-  const GroupHeader = ({ children }) => (
-    <div style={{
-      padding: '4px 12px 3px', fontSize: '0.65rem', fontWeight: 700,
-      color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em',
-      background: 'var(--bg3)', borderTop: '1px solid var(--border)',
-    }}>{children}</div>
-  );
-
-  return (
-    <div ref={wrapperRef} style={{ position: 'relative' }}>
-      {/* Trigger */}
-      <div
-        className="input"
-        onClick={() => setOpen(o => !o)}
-        style={{
-          cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
-          alignItems: 'center', userSelect: 'none',
-          color: displayLabel ? '#ffffff' : 'var(--text3)',
-        }}
-      >
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {displayLabel || placeholder}
-        </span>
-        <span style={{
-          fontSize: '0.6rem', color: 'var(--text3)', marginLeft: 8, flexShrink: 0,
-          display: 'inline-block',
-          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.15s',
-        }}>▼</span>
-      </div>
-
-      {/* Panel */}
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-          background: 'var(--bg2)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-sm)', zIndex: 9999,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
-          display: 'flex', flexDirection: 'column', maxHeight: 280,
-        }}>
-          {/* Search input */}
-          <div style={{ padding: '7px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-            <input
-              ref={inputRef}
-              className="input"
-              style={{ padding: '5px 9px', fontSize: '0.8rem', width: '100%', boxSizing: 'border-box' }}
-              placeholder="Search…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onClick={e => e.stopPropagation()}
-            />
-          </div>
-
-          <div style={{ overflowY: 'auto', flex: 1 }}>
-            {/* Skip */}
-            <Row val="">— Skip —</Row>
-
-            {/* Fixed value options */}
-            {filteredOptions.length > 0 && (
-              <>
-                <GroupHeader>Set Fixed Value</GroupHeader>
-                {filteredOptions.map(o => <Row key={o} val={o}>{o}</Row>)}
-              </>
-            )}
-
-            {/* Map to column */}
-            {filteredCols.length > 0 && (
-              <>
-                <GroupHeader>Map to Column</GroupHeader>
-                {filteredCols.map(c => <Row key={c} val={`__col__${c}`}>→ {c}</Row>)}
-              </>
-            )}
-
-            {filteredOptions.length === 0 && filteredCols.length === 0 && (
-              <div style={{ padding: '14px 12px', fontSize: '0.82rem', color: 'var(--text3)', textAlign: 'center' }}>
-                No results for "{search}"
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 export default function UploadCenter() {
   const [step, setStep] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [fileData, setFileData] = useState(null);
-  const [mapping, setMapping] = useState({});
-  const [fixedValues, setFixedValues] = useState({});
+  const [mapping, setMapping] = useState({});       // key → file column (for 'map' fields)
+  const [fixedValues, setFixedValues] = useState({});       // key → chosen preset value
+  const [customValues, setCustomValues] = useState({});     // key → typed custom value
+  const [useCustom, setUseCustom] = useState({});       // key → true when typing own value
   const [processing, setProcessing] = useState(false);
   const [fileStatus, setFileStatus] = useState(null);
 
   const onDrop = useCallback(async (accepted) => {
     if (!accepted.length) return;
-    const file = accepted[0];
     setUploading(true);
     try {
       const form = new FormData();
-      form.append('file', file);
+      form.append('file', accepted[0]);
       const { data } = await api.post('/files/upload', form);
       setFileData(data);
 
+      // Auto-map columns
       const autoMap = {};
-      const headers = data.headers || [];
-      FORM_FIELDS.filter(f => f.type === 'map').forEach(field => {
-        const match = headers.find(h => {
+      ALL_FIELDS.filter(f => f.type === 'map' || f.type === 'mapOrManual').forEach(field => {
+        const match = (data.headers || []).find(h => {
           const hl = h.toLowerCase().replace(/[\s_]/g, '');
-          return hl === field.key.toLowerCase().replace(/[\s_]/g, '')
-            || hl === field.label.toLowerCase().replace(/[\s_]/g, '');
+          const kl = field.key.toLowerCase().replace(/[\s_]/g, '');
+          const ll = field.label.toLowerCase().replace(/[\s_]/g, '');
+          return hl === kl || hl === ll;
         });
-        if (match) autoMap[field.key] = `__col__${match}`;
+        if (match) autoMap[field.key] = match;
       });
       setMapping(autoMap);
       setStep(2);
@@ -226,26 +85,29 @@ export default function UploadCenter() {
   const handleProcess = async () => {
     setProcessing(true);
     try {
+      // Build column→field mapping
       const finalMapping = {};
-      const finalFixed = {};
-
-      // Resolve map fields
-      Object.entries(mapping).forEach(([fieldKey, val]) => {
-        if (!val) return;
-        if (val.startsWith('__col__')) finalMapping[val.slice(7)] = fieldKey;
+      Object.entries(mapping).forEach(([fieldKey, fileCol]) => {
+        if (fileCol) finalMapping[fileCol] = fieldKey;
       });
 
-      // Resolve fixed/community fields
-      Object.entries(fixedValues).forEach(([fieldKey, val]) => {
-        if (!val) return;
-        if (val.startsWith('__col__')) finalMapping[val.slice(7)] = fieldKey;
-        else finalFixed[fieldKey] = val;
+      // Build fixed values — custom typed value wins over dropdown selection
+      const combinedFixed = {};
+      ALL_FIELDS.filter(f => f.type === 'fixed' || f.type === 'mapOrManual').forEach(f => {
+        const custom = customValues[f.key]?.trim();
+        const preset = fixedValues[f.key];
+        if (useCustom[f.key] && custom) {
+          combinedFixed[f.key] = custom;
+        } else if (!useCustom[f.key] && preset) {
+          combinedFixed[f.key] = preset;
+        }
       });
 
       await api.post(`/files/${fileData.file.id}/process`, {
         mapping: finalMapping,
-        fixedValues: finalFixed,
+        fixedValues: combinedFixed,
       });
+
       setStep(3);
       pollStatus(fileData.file.id);
     } catch (err) {
@@ -272,18 +134,154 @@ export default function UploadCenter() {
 
   const reset = () => {
     setStep(1); setFileData(null); setMapping({});
-    setFixedValues({}); setFileStatus(null); setProcessing(false);
+    setFixedValues({}); setCustomValues({}); setUseCustom({});
+    setFileStatus(null); setProcessing(false);
   };
 
   const steps = ['Upload', 'Map Columns', 'Processing', 'Done'];
-  const columnOptions = fileData?.headers ?? [];
+  const columnOptions = fileData?.headers || [];
 
-  // ── Community options: filter by selected emirate, else show full sorted list ──
-  const selectedEmirate = fixedValues.emirate && !fixedValues.emirate.startsWith('__col__')
-    ? fixedValues.emirate : null;
-  const communityOptions = selectedEmirate && COMMUNITIES_BY_EMIRATE[selectedEmirate]
-    ? COMMUNITIES_BY_EMIRATE[selectedEmirate]
-    : ALL_COMMUNITIES; // ← was Object.values(...).flat() which had duplicates & no sort
+  const colLabel = {
+    fontSize: '0.7rem', fontWeight: 700,
+    color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em',
+  };
+  const fieldBox = {
+    padding: '9px 14px', borderRadius: 'var(--radius-sm)',
+    background: 'var(--bg3)', border: '1px solid var(--border)',
+    fontSize: '0.875rem', fontWeight: 500, color: 'var(--text)',
+  };
+
+  // ── Renders the right-side control for a field ──────────────────────────
+  const renderControl = (field) => {
+    // 'map' — just a column picker
+    if (field.type === 'map') {
+      return (
+        <select
+          className="input"
+          value={mapping[field.key] || ''}
+          onChange={e => setMapping({ ...mapping, [field.key]: e.target.value || null })}
+        >
+          <option value="">— Skip —</option>
+          {columnOptions.map(col => <option key={col} value={col}>{col}</option>)}
+        </select>
+      );
+    }
+
+    // 'fixed' — preset dropdown + optional "Add own" text input
+    if (field.type === 'fixed') {
+      const isCustom = useCustom[field.key];
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {isCustom ? (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                className="input"
+                placeholder={`Type custom ${field.label}…`}
+                value={customValues[field.key] || ''}
+                onChange={e => setCustomValues({ ...customValues, [field.key]: e.target.value })}
+                style={{ flex: 1 }}
+                autoFocus
+              />
+              <button
+                title="Back to list"
+                onClick={() => setUseCustom({ ...useCustom, [field.key]: false })}
+                style={{
+                  padding: '0 10px', background: 'var(--bg3)',
+                  border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text3)', cursor: 'pointer', fontSize: '0.8rem',
+                }}
+              >✕</button>
+            </div>
+          ) : (
+            <select
+              className="input"
+              value={fixedValues[field.key] || ''}
+              onChange={e => {
+                const val = e.target.value;
+                if (val === '__custom__') {
+                  setUseCustom({ ...useCustom, [field.key]: true });
+                  setFixedValues({ ...fixedValues, [field.key]: null });
+                } else {
+                  setFixedValues({ ...fixedValues, [field.key]: val || null });
+                }
+              }}
+            >
+              <option value="">— Select {field.label} —</option>
+              {field.options.map(o => <option key={o} value={o}>{o}</option>)}
+              <option value="__custom__">＋ Add your {field.label}…</option>
+            </select>
+          )}
+          {/* show typed value confirmation */}
+          {isCustom && customValues[field.key]?.trim() && (
+            <div style={{
+              fontSize: '0.75rem', color: 'var(--accent)',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <PenLine size={11} /> Custom: "{customValues[field.key].trim()}"
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 'mapOrManual' — column picker OR type manually; toggle between
+    if (field.type === 'mapOrManual') {
+      const isCustom = useCustom[field.key];
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {isCustom ? (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                className="input"
+                placeholder={`Type ${field.label} for all rows…`}
+                value={customValues[field.key] || ''}
+                onChange={e => setCustomValues({ ...customValues, [field.key]: e.target.value })}
+                style={{ flex: 1 }}
+                autoFocus
+              />
+              <button
+                title="Back to column mapping"
+                onClick={() => setUseCustom({ ...useCustom, [field.key]: false })}
+                style={{
+                  padding: '0 10px', background: 'var(--bg3)',
+                  border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text3)', cursor: 'pointer', fontSize: '0.8rem',
+                }}
+              >✕</button>
+            </div>
+          ) : (
+            <select
+              className="input"
+              value={mapping[field.key] || ''}
+              onChange={e => {
+                const val = e.target.value;
+                if (val === '__custom__') {
+                  setUseCustom({ ...useCustom, [field.key]: true });
+                  setMapping({ ...mapping, [field.key]: null });
+                } else {
+                  setMapping({ ...mapping, [field.key]: val || null });
+                }
+              }}
+            >
+              <option value="">— Skip —</option>
+              {columnOptions.map(col => <option key={col} value={col}>{col}</option>)}
+              <option value="__custom__">＋ Type your project name…</option>
+            </select>
+          )}
+          {isCustom && customValues[field.key]?.trim() && (
+            <div style={{
+              fontSize: '0.75rem', color: 'var(--accent)',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <PenLine size={11} /> All {fileData?.totalRows?.toLocaleString()} rows → "{customValues[field.key].trim()}"
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="fade-in">
@@ -307,7 +305,7 @@ export default function UploadCenter() {
         ))}
       </div>
 
-      {/* Step 1 ── Upload */}
+      {/* ── Step 1: Upload ── */}
       {step === 1 && (
         <div className="card">
           <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
@@ -320,8 +318,7 @@ export default function UploadCenter() {
               {uploading ? <span className="pulse">Parsing file…</span> : 'Supports .xlsx, .xls, .csv — up to 50MB'}
             </div>
             {!uploading && (
-              <button className="btn btn-primary" style={{ marginTop: 20 }}
-                onClick={e => { e.stopPropagation(); open(); }}>
+              <button className="btn btn-primary" style={{ marginTop: 20 }} onClick={e => { e.stopPropagation(); open(); }}>
                 <Upload size={16} /> Browse Files
               </button>
             )}
@@ -329,10 +326,11 @@ export default function UploadCenter() {
         </div>
       )}
 
-      {/* Step 2 ── Column Mapping */}
+      {/* ── Step 2: Mapping ── */}
       {step === 2 && fileData && (
         <div>
           <div className="card mb-24">
+            {/* Header */}
             <div className="flex items-center justify-between mb-20">
               <div>
                 <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>Column Mapping</h2>
@@ -345,66 +343,30 @@ export default function UploadCenter() {
               </div>
             </div>
 
-            {/* Header row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px', marginBottom: 8, padding: '0 4px' }}>
-              {['Field', 'Map to Column / Set Value'].map(h => (
-                <div key={h} style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  {h}
+            {/* Column headers */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr',
+              gap: '0 24px', marginBottom: 8, padding: '0 4px',
+            }}>
+              <div style={colLabel}>Field</div>
+              <div style={colLabel}>Map to Column / Set Value</div>
+            </div>
+
+            {/* All rows */}
+            <div style={{ display: 'grid', gap: 6 }}>
+              {ALL_FIELDS.map(field => (
+                <div key={field.key} style={{
+                  display: 'grid', gridTemplateColumns: '1fr 1fr',
+                  gap: '0 16px', alignItems: 'start',
+                }}>
+                  <div style={{ ...fieldBox, alignSelf: 'center' }}>{field.label}</div>
+                  <div>{renderControl(field)}</div>
                 </div>
               ))}
             </div>
-
-            {/* Field rows */}
-            <div style={{ display: 'grid', gap: 6 }}>
-              {FORM_FIELDS.map(field => {
-                let currentValue = '';
-                let handleChange = () => { };
-
-                if (field.type === 'fixed') {
-                  currentValue = fixedValues[field.key] || '';
-                  handleChange = (val) => setFixedValues(fv => ({ ...fv, [field.key]: val || null }));
-                } else if (field.type === 'community') {
-                  currentValue = fixedValues.community || '';
-                  handleChange = (val) => setFixedValues(fv => ({ ...fv, community: val || null }));
-                } else {
-                  currentValue = mapping[field.key] || '';
-                  handleChange = (val) => setMapping(m => ({ ...m, [field.key]: val || null }));
-                }
-
-                return (
-                  <div key={field.key} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px', alignItems: 'center' }}>
-                    {/* Left: static field label — same for ALL rows including Community */}
-                    <div style={{
-                      padding: '9px 14px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--bg3)',
-                      border: '1px solid var(--border)',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: 'var(--text)',
-                    }}>
-                      {field.label}
-                    </div>
-
-                    {/* Right: searchable dropdown */}
-                    <SearchableSelect
-                      value={currentValue}
-                      onChange={handleChange}
-                      placeholder={`— Select ${field.label} —`}
-                      options={
-                        field.type === 'fixed' ? field.options :
-                          field.type === 'community' ? communityOptions :
-                            []
-                      }
-                      columnOptions={field.type === 'fixed' ? [] : columnOptions}
-                    />
-                  </div>
-                );
-              })}
-            </div>
           </div>
 
-          {/* Preview table */}
+          {/* Preview */}
           <div className="card mb-24">
             <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, marginBottom: 16, fontSize: '0.95rem' }}>
               Data Preview (first 5 rows)
@@ -434,7 +396,7 @@ export default function UploadCenter() {
         </div>
       )}
 
-      {/* Step 3 ── Processing */}
+      {/* ── Step 3: Processing ── */}
       {step === 3 && (
         <div className="card" style={{ textAlign: 'center', padding: '64px 32px' }}>
           <div style={{ fontSize: '3rem', marginBottom: 16 }}>⚙️</div>
@@ -446,7 +408,7 @@ export default function UploadCenter() {
         </div>
       )}
 
-      {/* Step 4 ── Done */}
+      {/* ── Step 4: Done ── */}
       {step === 4 && fileStatus && (
         <div className="card" style={{ textAlign: 'center', padding: '64px 32px' }}>
           {fileStatus.status === 'completed' ? (

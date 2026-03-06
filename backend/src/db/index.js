@@ -86,10 +86,16 @@ const initDB = async () => {
       CREATE SEQUENCE IF NOT EXISTS customer_id_seq START 1;
     `);
 
-    // Migrate existing databases: add emirate and property_type if missing
+    // Migrate existing databases: add missing columns if not present
     await client.query(`
       ALTER TABLE ownership ADD COLUMN IF NOT EXISTS emirate VARCHAR(100);
       ALTER TABLE ownership ADD COLUMN IF NOT EXISTS property_type VARCHAR(100);
+      ALTER TABLE ownership ADD COLUMN IF NOT EXISTS area VARCHAR(255);
+      ALTER TABLE ownership ADD COLUMN IF NOT EXISTS land_number VARCHAR(100);
+      ALTER TABLE ownership ADD COLUMN IF NOT EXISTS land_sub_number VARCHAR(100);
+      ALTER TABLE ownership ADD COLUMN IF NOT EXISTS actual_area NUMERIC(12,2);
+      ALTER TABLE ownership ADD COLUMN IF NOT EXISTS property_sub_type VARCHAR(100);
+      ALTER TABLE ownership ADD COLUMN IF NOT EXISTS zip_code VARCHAR(50);
     `);
 
     // FIX 1: Default admin removed — create your admin manually via the API

@@ -268,6 +268,11 @@ router.delete('/:fileId', auth(), async (req, res) => {
 
     await client.query('BEGIN');
     await client.query('DELETE FROM ownership WHERE source_file_id = $1', [req.params.fileId]);
+    // Delete customers who no longer have any ownership records
+    await client.query(`
+      DELETE FROM customers
+      WHERE id NOT IN (SELECT DISTINCT customer_id FROM ownership WHERE customer_id IS NOT NULL)
+    `);
     await client.query('DELETE FROM source_files WHERE id = $1', [req.params.fileId]);
     await client.query('COMMIT');
     res.json({ success: true });

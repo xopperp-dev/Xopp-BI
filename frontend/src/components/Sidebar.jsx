@@ -7,7 +7,7 @@ import logo from '../assets/logo.png';
 const nav = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/', roles: ['admin', 'operator', 'viewer'] },
   { label: 'Upload Files', icon: Upload, path: '/upload', roles: ['admin', 'operator', 'viewer'] },
-  { label: 'Search', icon: Search, path: '/search', roles: ['admin', 'operator', 'viewer'] },
+  { label: 'BI Search', icon: Search, path: '/search', roles: ['admin', 'operator', 'viewer'] },
   { label: 'Customers', icon: Users, path: '/customers', roles: ['admin', 'operator', 'viewer'] },
   { label: 'Source Files', icon: FileText, path: '/files', roles: ['admin', 'operator', 'viewer'] },
   { label: 'Exports', icon: Download, path: '/exports', roles: ['admin', 'operator', 'viewer'] },

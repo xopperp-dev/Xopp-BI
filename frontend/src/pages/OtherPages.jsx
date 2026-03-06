@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Search, Users, Trash2, Eye, EyeOff, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
@@ -463,6 +463,29 @@ export function AccountPage() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [resetting, setResetting] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
+
+  const handleDatabaseReset = async () => {
+    if (resetConfirmText !== 'RESET') {
+      toast.error('Please type RESET to confirm');
+      return;
+    }
+    setResetting(true);
+    try {
+      await api.delete('/reset/all');
+      toast.success('All data has been reset successfully.');
+      setShowResetModal(false);
+      setResetConfirmText('');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Reset failed');
+    }
+    setResetting(false);
+  };
+
   const initials = user?.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
 
   const roleColors = { admin: 'badge-yellow', operator: 'badge-blue', viewer: 'badge-gray' };
@@ -545,7 +568,7 @@ export function AccountPage() {
       </div>
 
       {/* Change Password Card */}
-      <div className="card">
+      <div className="card" style={{ marginBottom: isAdmin ? 16 : 0 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 700 }}>Change Password</h2>
         <p style={{ margin: '0 0 20px', color: 'var(--text2)', fontSize: '0.9rem' }}>
           Update your password. You'll need your current password to confirm the change.
@@ -610,6 +633,66 @@ export function AccountPage() {
           </button>
         </form>
       </div>
+
+      {/* Danger Zone — Admin only */}
+      {isAdmin && (
+        <div className="card" style={{ border: '1px solid var(--danger)', marginTop: 16 }}>
+          <h2 style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 700, color: 'var(--danger)' }}>Danger Zone</h2>
+          <p style={{ margin: '0 0 20px', color: 'var(--text2)', fontSize: '0.9rem' }}>
+            Permanently delete all customers, properties, and uploaded files from the database. This action cannot be undone.
+          </p>
+          <button
+            className="btn btn-danger"
+            onClick={() => { setResetConfirmText(''); setShowResetModal(true); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          >
+            <RotateCcw size={15} />
+            Reset All Data
+          </button>
+        </div>
+      )}
+
+      {/* Reset Confirmation Modal */}
+      {showResetModal && (
+        <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <div className="modal-header" style={{ background: 'var(--danger)', margin: '-24px -24px 20px', padding: '16px 24px', borderRadius: '12px 12px 0 0' }}>
+              <div className="modal-title" style={{ color: '#fff' }}>⚠️ Reset All Data</div>
+              <button className="btn btn-ghost btn-sm btn-icon" onClick={() => setShowResetModal(false)} style={{ color: '#fff' }}>✕</button>
+            </div>
+            <p style={{ margin: '0 0 8px', fontWeight: 600 }}>This will permanently delete:</p>
+            <ul style={{ margin: '0 0 16px', paddingLeft: 20, color: 'var(--text2)', fontSize: '0.9rem', lineHeight: 1.8 }}>
+              <li>All customer records</li>
+              <li>All property ownership records</li>
+              <li>All uploaded source files</li>
+              <li>All duplicate records</li>
+            </ul>
+            <p style={{ margin: '0 0 12px', color: 'var(--text2)', fontSize: '0.9rem' }}>
+              Type <strong style={{ color: 'var(--danger)' }}>RESET</strong> to confirm.
+            </p>
+            <div className="input-group" style={{ marginBottom: 20 }}>
+              <input
+                className="input"
+                placeholder="Type RESET to confirm"
+                value={resetConfirmText}
+                onChange={e => setResetConfirmText(e.target.value)}
+                autoFocus
+                style={{ borderColor: resetConfirmText === 'RESET' ? 'var(--danger)' : '' }}
+              />
+            </div>
+            <div className="flex gap-8">
+              <button
+                className="btn btn-danger"
+                onClick={handleDatabaseReset}
+                disabled={resetting || resetConfirmText !== 'RESET'}
+              >
+                {resetting ? 'Resetting…' : 'Reset All Data'}
+              </button>
+              <button className="btn btn-ghost" onClick={() => setShowResetModal(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -42,6 +42,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/files', require('./routes/files'));
 app.use('/api/customers', require('./routes/customers'));
 app.use('/api/exports', require('./routes/exports'));
+app.use('/api/reset', require('./routes/reset'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
